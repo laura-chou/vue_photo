@@ -158,12 +158,11 @@ app.post('/login', async (req, res) => {
         password: md5(req.body.password)
       }
     )
-    if (req.session.user !== undefined) {
-      phoneLogin = true
-    }
     if (result.length > 0) {
       req.session.user = result[0].account
-      console.log('login' + req.session.user)
+      if (req.session.user !== undefined) {
+        phoneLogin = true
+      }
       res.status(200)
       res.send({ success: true, message: '' })
     } else {
@@ -220,6 +219,7 @@ app.get('/captcha', function (req, res) {
 /* ---------------- heartbeat ----------------- */
 app.get('/heartbeat', async (req, res) => {
   let islogin = false
+  console.log(phoneLogin)
   if (req.session.user !== undefined || phoneLogin) {
     islogin = true
   }
