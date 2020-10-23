@@ -151,7 +151,6 @@ app.post('/login', async (req, res) => {
     res.send({ success: false, message: '格式不符' })
     return
   }
-
   try {
     const result = await db.users.find(
       {
@@ -160,8 +159,8 @@ app.post('/login', async (req, res) => {
       }
     )
     if (result.length > 0) {
+      console.log(req)
       req.session.user = result[0].account
-      console.log(req.session)
       res.status(200)
       res.send({ success: true, message: '' })
     } else {
@@ -216,7 +215,7 @@ app.get('/captcha', function (req, res) {
 /* ---------------- heartbeat ----------------- */
 app.get('/heartbeat', async (req, res) => {
   let islogin = false
-  console.log(req.session)
+  // console.log(req.sessionID)
   if (req.session.user !== undefined) {
     islogin = true
   }
