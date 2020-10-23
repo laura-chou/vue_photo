@@ -50,6 +50,14 @@ const routes = [
       login: true,
       title: '線上相簿 | 相片'
     }
+  },
+  {
+    path: '*',
+    name: 'Notfound',
+    component: () => import(/* webpackChunkName: "notfound" */ '../views/Notfound.vue'),
+    meta: {
+      title: '404'
+    }
   }
 ]
 

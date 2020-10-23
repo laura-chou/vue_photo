@@ -341,7 +341,35 @@ body,html {
     padding-right: 0 !important;
     height: 100vh !important;
 }
-
+/*--------------- notfound --------------------*/
+#notfound {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    z-index: 99;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    .row {
+        height: 60%;
+        margin: 0;
+        .col-12 {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            h1 {
+                color: red;
+                font-size: 50px;
+            }
+            img {
+                width: 50%;
+                cursor: pointer;
+            }
+        }
+    }
+}
 
 /*--------------- media query --------------------*/
 // 576px 以下
@@ -356,5 +384,10 @@ body,html {
     #photo {
         overflow-x: hidden;
         overflow-y: auto;
+    }
+    #notfound {
+        .row .col-12 img{
+            width: 100%;
+        }
     }
 }

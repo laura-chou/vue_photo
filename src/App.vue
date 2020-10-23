@@ -5,9 +5,7 @@
 
       <div class="row" slot="content-header" slot-scope="{closeMenu}">
         <div class="col-6 collapse-brand">
-            <a href="https://demos.creative-tim.com/vue-argon-design-system/documentation/">
-                <img src="img/logo.png">
-            </a>
+          <a href="#" @click="page('/')"><img src="img/logo.png"></a>
         </div>
         <div class="col-6 collapse-close">
             <close-button @click="closeMenu"></close-button>
@@ -117,18 +115,31 @@ import BaseNav from '@/components/BaseNav'
 import CloseButton from '@/components/CloseButton'
 export default {
   name: 'app',
+  data () {
+    return {
+      hb: ''
+    }
+  },
   components: {
     BaseNav,
     CloseButton
   },
   computed: {
     user () {
-      return this.$store.getters.user
+      const user = this.$store.getters.user
+      if (user.length > 0) {
+        this.Interval()
+      } else {
+        clearInterval(this.hb)
+      }
+      return user
     }
   },
   methods: {
     page (to) {
-      this.$router.push(to)
+      if (this.$route.path !== to) {
+        this.$router.push(to)
+      }
     },
     logout () {
       this.axios.delete(process.env.VUE_APP_APIURL + '/logout')
@@ -143,12 +154,9 @@ export default {
                 allowOutsideClick: false,
                 confirmButtonText: '確定'
               }).then((result) => {
-                // 呼叫 vuex 的登入
+                // 如果現在不是在首頁，跳到登出後的首頁
                 this.$store.commit('logout')
-                // 跳到登入後的相簿頁
-                console.log(this.$route)
                 if (this.$route.path !== '/') {
-                  // 如果現在不是在首頁，跳到登出後的首頁
                   this.$router.push('/')
                 }
               })
@@ -192,7 +200,6 @@ export default {
                   allowOutsideClick: false,
                   confirmButtonText: '確定'
                 }).then((result) => {
-                  // 前端登出
                   this.$store.commit('logout')
                   // 如果現在不是在首頁，跳到登出後的首頁
                   if (this.$route.path !== '/') {
@@ -219,13 +226,12 @@ export default {
             })
           })()
         })
+    },
+    Interval () {
+      this.hb = setInterval(() => {
+        this.heartbeat()
+      }, 1000 * 5)
     }
-  },
-  mounted () {
-    this.heartbeat()
-    setInterval(() => {
-      this.heartbeat()
-    }, 1000 * 5)
   }
 }
 </script>

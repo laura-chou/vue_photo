@@ -47,7 +47,8 @@ export default {
     return {
       account: '',
       password: '',
-      warntext: ''
+      warntext: '',
+      hb: ''
     }
   },
   methods: {
