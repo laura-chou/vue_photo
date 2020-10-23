@@ -63,6 +63,7 @@ app.use(session({
 }))
 
 let storage
+let phoneLogin = false
 if (process.env.FTP === 'false') {
   // 開發環境將上傳檔案放本機
   storage = multer.diskStorage({
@@ -157,7 +158,9 @@ app.post('/login', async (req, res) => {
         password: md5(req.body.password)
       }
     )
-
+    if (req.session.user !== undefined) {
+      phoneLogin = true
+    }
     if (result.length > 0) {
       req.session.user = result[0].account
       console.log('login' + req.session.user)
@@ -186,9 +189,11 @@ app.delete('/logout', async (req, res) => {
   req.session.destroy(error => {
     if (error) {
       res.status(500)
+      phoneLogin = false
       res.send({ success: false, message: '伺服器錯誤' })
     } else {
       res.clearCookie()
+      phoneLogin = false
       res.status(200)
       res.send({ success: true, message: '' })
     }
@@ -215,8 +220,7 @@ app.get('/captcha', function (req, res) {
 /* ---------------- heartbeat ----------------- */
 app.get('/heartbeat', async (req, res) => {
   let islogin = false
-  console.log('heartbeat：' + req.session.user)
-  if (req.session.user !== undefined) {
+  if (req.session.user !== undefined || phoneLogin) {
     islogin = true
   }
   res.status(200)
