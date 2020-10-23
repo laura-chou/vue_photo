@@ -160,7 +160,7 @@ app.post('/login', async (req, res) => {
 
     if (result.length > 0) {
       req.session.user = result[0].account
-      console.log('login：' + result[0].account)
+      console.log('login' + req.session.user)
       res.status(200)
       res.send({ success: true, message: '' })
     } else {
