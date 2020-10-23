@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js");
 
 importScripts(
-  "precache-manifest.1e6ea951d16db56ed30cf9c6727cabf8.js"
+  "precache-manifest.0f1be619fa315b02ebd6ec887925b60c.js"
 );
 
 workbox.core.setCacheNameDetails({prefix: "album"});
