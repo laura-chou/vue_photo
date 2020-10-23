@@ -1,49 +1,180 @@
-<template lang="pug">
-  #app
-    b-navbar(toggleable='lg' type='dark' variant='primary')
-      b-navbar-brand(to='/') 相簿
-      b-navbar-toggle(target='nav-collapse')
-      b-collapse#nav-collapse(is-nav)
-        b-navbar-nav.ml-auto
-          b-nav-item(v-if="user.length == 0" to='/login') 登入
-          b-nav-item(v-else to='/album') 我的相簿
-          b-nav-item(v-if="user.length == 0" to='/reg') 註冊
-          b-nav-item(v-else @click="logout") 登出
-    b-container
-      router-view
+<template>
+  <div id="app" style="position: relative">
+    <base-nav type="default" effect="dark" expand>
+      <a class="navbar-brand d-flex align-items-center jus" href="#" @click="page('/')"><img class="mr-2" src="img/photo-album.png">線上相簿</a>
+
+      <div class="row" slot="content-header" slot-scope="{closeMenu}">
+        <div class="col-6 collapse-brand">
+            <a href="https://demos.creative-tim.com/vue-argon-design-system/documentation/">
+                <img src="img/logo.png">
+            </a>
+        </div>
+        <div class="col-6 collapse-close">
+            <close-button @click="closeMenu"></close-button>
+        </div>
+      </div>
+      <ul class="navbar-nav ml-lg-auto">
+        <li class="nav-item" v-if="user.length == 0" >
+            <a class="nav-link nav-link-icon" href="#" @click="page('/login')">登入</a>
+        </li>
+        <li class="nav-item" v-else>
+            <a class="nav-link nav-link-icon" href="#" @click="page('/album')">我的相簿</a>
+        </li>
+        <li class="nav-item" v-if="user.length == 0" >
+            <a class="nav-link nav-link-icon" href="#" @click="page('/register')">註冊</a>
+        </li>
+        <li class="nav-item" v-else >
+            <a class="nav-link nav-link-icon" href="#" @click="logout">登出</a>
+        </li>
+      </ul>
+    </base-nav>
+    <Particles
+      id="tsparticles"
+      :options="{
+        background: {
+            color: {
+                value: '#172b4d'
+            }
+        },
+        fpsLimit: 60,
+        interactivity: {
+            detectsOn: 'canvas',
+            events: {
+                onClick: {
+                    enable: false,
+                    mode: 'push'
+                },
+                onHover: {
+                    enable: false,
+                    mode: 'repulse'
+                },
+                resize: true
+            },
+            modes: {
+                bubble: {
+                    distance: 400,
+                    duration: 2,
+                    opacity: 0.8,
+                    size: 40
+                },
+                push: {
+                    quantity: 4
+                },
+                repulse: {
+                    distance: 200,
+                    duration: 0.4
+                }
+            }
+        },
+        particles: {
+            color: {
+                value: '#ffffff'
+            },
+            links: {
+                color: '#ffffff',
+                distance: 150,
+                enable: false,
+                opacity: 0.5,
+                width: 1
+            },
+            collisions: {
+                enable: true
+            },
+            move: {
+                direction: 'none',
+                enable: true,
+                outMode: 'out',
+                random: true,
+                speed: 1,
+                straight: false
+            },
+            number: {
+                density: {
+                    enable: true,
+                    value_area: 800
+                },
+                value: 80
+            },
+            opacity: {
+                value: 0.5
+            },
+            shape: {
+                type: 'circle'
+            },
+            size: {
+                random: true,
+                value: 3
+            }
+        },
+        detectRetina: true
+      }"
+    />
+    <router-view/>
+  </div>
 </template>
 <script>
+import BaseNav from '@/components/BaseNav'
+import CloseButton from '@/components/CloseButton'
 export default {
   name: 'app',
+  components: {
+    BaseNav,
+    CloseButton
+  },
   computed: {
     user () {
       return this.$store.getters.user
     }
   },
   methods: {
+    page (to) {
+      this.$router.push(to)
+    },
     logout () {
       this.axios.delete(process.env.VUE_APP_APIURL + '/logout')
         .then(response => {
           const data = response.data
           if (data.success) {
             // 如果回來的資料 success 是 true
-            alert('登出成功')
-            // 呼叫 vuex 的登入
-            this.$store.commit('logout')
-            // 跳到登入後的相簿頁
-            console.log(this.$route)
-            if (this.$route.path !== '/') {
-              // 如果現在不是在首頁，跳到登出後的首頁
-              this.$router.push('/')
-            }
+            (async () => {
+              await this.$swal.fire({
+                icon: 'success',
+                title: '登出成功',
+                allowOutsideClick: false,
+                confirmButtonText: '確定'
+              }).then((result) => {
+                // 呼叫 vuex 的登入
+                this.$store.commit('logout')
+                // 跳到登入後的相簿頁
+                console.log(this.$route)
+                if (this.$route.path !== '/') {
+                  // 如果現在不是在首頁，跳到登出後的首頁
+                  this.$router.push('/')
+                }
+              })
+            })()
           } else {
             // 不是就顯示回來的 message
-            alert(data.message)
+            (async () => {
+              await this.$swal.fire({
+                icon: 'error',
+                title: data.message,
+                allowOutsideClick: false,
+                confirmButtonText: '確定'
+              })
+            })()
           }
         })
         .catch(error => {
           // 如果回來的狀態不是 200，顯示回來的 message
-          alert(error.response.data.message)
+          (async () => {
+            await this.$swal.fire({
+              icon: 'error',
+              title: error.response.data.message,
+              allowOutsideClick: false,
+              confirmButtonText: '確定'
+            })
+          })()
         })
     },
     heartbeat () {
@@ -54,23 +185,39 @@ export default {
           if (this.user.length > 0) {
             // 如果後端登入時間過期
             if (!data) {
-              alert('登入時效已過')
-              // 前端登出
+              (async () => {
+                await this.$swal.fire({
+                  icon: 'error',
+                  title: '登入時效已過',
+                  allowOutsideClick: false,
+                  confirmButtonText: '確定'
+                }).then((result) => {
+                  // 前端登出
+                  this.$store.commit('logout')
+                  // 如果現在不是在首頁，跳到登出後的首頁
+                  if (this.$route.path !== '/') {
+                    this.$router.push('/')
+                  }
+                })
+              })()
+            }
+          }
+        })
+        .catch(() => {
+          (async () => {
+            await this.$swal.fire({
+              icon: 'error',
+              title: '發生錯誤',
+              allowOutsideClick: false,
+              confirmButtonText: '確定'
+            }).then((result) => {
               this.$store.commit('logout')
               // 如果現在不是在首頁，跳到登出後的首頁
               if (this.$route.path !== '/') {
                 this.$router.push('/')
               }
-            }
-          }
-        })
-        .catch(() => {
-          alert('發生錯誤')
-          this.$store.commit('logout')
-          // 如果現在不是在首頁，跳到登出後的首頁
-          if (this.$route.path !== '/') {
-            this.$router.push('/')
-          }
+            })
+          })()
         })
     }
   },

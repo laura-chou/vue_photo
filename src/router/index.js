@@ -16,9 +16,9 @@ const routes = [
     }
   },
   {
-    path: '/reg',
-    name: 'Reg',
-    component: () => import(/* webpackChunkName: "reg" */ '../views/Reg.vue'),
+    path: '/register',
+    name: 'Register',
+    component: () => import(/* webpackChunkName: "register" */ '../views/Register.vue'),
     meta: {
       login: false,
       title: '線上相簿 | 註冊'
@@ -38,7 +38,17 @@ const routes = [
     name: 'Album',
     component: () => import(/* webpackChunkName: "album" */ '../views/Album.vue'),
     meta: {
-      login: true
+      login: true,
+      title: '線上相簿 | 資料夾'
+    }
+  },
+  {
+    path: '/Photo',
+    name: 'Photo',
+    component: () => import(/* webpackChunkName: "photo" */ '../views/Photo.vue'),
+    meta: {
+      login: true,
+      title: '線上相簿 | 相片'
     }
   }
 ]

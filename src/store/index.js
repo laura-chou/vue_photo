@@ -6,7 +6,9 @@ Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
-    user: ''
+    user: '',
+    file: '',
+    folder: []
   },
   mutations: {
     login (state, data) {
@@ -14,11 +16,23 @@ export default new Vuex.Store({
     },
     logout (state) {
       state.user = ''
+    },
+    folder (state, data) {
+      state.folder = data
+    },
+    gofile (state, data) {
+      state.file = data
     }
   },
   getters: {
     user (state) {
       return state.user
+    },
+    file (state) {
+      return state.file
+    },
+    folder (state) {
+      return state.folder
     }
   },
   plugins: [createPersistedstate()]
