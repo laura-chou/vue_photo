@@ -160,6 +160,7 @@ app.post('/login', async (req, res) => {
 
     if (result.length > 0) {
       req.session.user = result[0].account
+      console.log('login：' + result[0].account)
       res.status(200)
       res.send({ success: true, message: '' })
     } else {
@@ -214,6 +215,7 @@ app.get('/captcha', function (req, res) {
 /* ---------------- heartbeat ----------------- */
 app.get('/heartbeat', async (req, res) => {
   let islogin = false
+  console.log('heartbeat：' + req.session.user)
   if (req.session.user !== undefined) {
     islogin = true
   }
