@@ -22,7 +22,9 @@ const app = express()
 app.use(bodyParser.json())
 app.use(cors({
   origin (origin, callback) {
+    // 直接開網頁，不是 ajax 時，origin 是 undefined
     if (origin === undefined) {
+      // 沒有允許圖片會撈不到
       callback(null, true)
     } else {
       if (process.env.ALLOW_CORS === 'true') {
@@ -63,7 +65,6 @@ app.use(session({
 }))
 
 let storage
-const loginUser = ''
 if (process.env.FTP === 'false') {
   // 開發環境將上傳檔案放本機
   storage = multer.diskStorage({
@@ -160,7 +161,7 @@ app.post('/login', async (req, res) => {
     )
     if (result.length > 0) {
       req.session.user = result[0].account
-      console.log('login' + req.session)
+      console.log(req.session)
       res.status(200)
       res.send({ success: true, message: '' })
     } else {
