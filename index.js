@@ -7,8 +7,9 @@ import multer from 'multer'
 import md5 from 'md5'
 import dotenv from 'dotenv'
 import path from 'path'
-import FTPStorage from 'multer-ftp'
 import fs from 'fs'
+import FTPStorage from 'multer-ftp'
+import svgCaptcha from 'svg-captcha'
 
 import db from './db.js'
 
@@ -69,7 +70,7 @@ if (process.env.FTP === 'false') {
       cb(null, 'images/')
     },
     filename (req, file, cb) {
-      cb(null, Date.now() + path.extname(file.originalname))
+      cb(null, 'vuephoto' + Date.now() + path.extname(file.originalname))
     }
   })
 } else {
@@ -85,7 +86,7 @@ if (process.env.FTP === 'false') {
       password: process.env.FTP_PASSWORD
     },
     destination (req, file, options, cb) {
-      cb(null, options.basepath + Date.now() + path.extname(file.originalname))
+      cb(null, options.basepath + 'vuephoto' + Date.now() + path.extname(file.originalname))
     }
   })
 }
@@ -109,14 +110,17 @@ const upload = multer({
 app.listen(process.env.PORT, () => {
   console.log('已啟動')
 })
-
+/* ---------------- register ----------------- */
 app.post('/users', async (req, res) => {
   if (!req.headers['content-type'].includes('application/json')) {
     res.status(400)
     res.send({ success: false, message: '格式不符' })
     return
+  } else if (req.session.captcha !== req.body.verify) {
+    res.status(400)
+    res.send({ success: false, message: '驗證碼錯誤' })
+    return
   }
-
   try {
     await db.users.create({
       account: req.body.account,
@@ -138,7 +142,7 @@ app.post('/users', async (req, res) => {
     }
   }
 })
-
+/* ---------------- login ----------------- */
 app.post('/login', async (req, res) => {
   if (!req.headers['content-type'].includes('application/json')) {
     res.status(400)
@@ -160,7 +164,7 @@ app.post('/login', async (req, res) => {
       res.send({ success: true, message: '' })
     } else {
       res.status(404)
-      res.send({ success: false, message: '帳號密碼錯誤' })
+      res.send({ success: false, message: '帳號或密碼錯誤' })
     }
   } catch (error) {
     if (error.name === 'ValidationError') {
@@ -176,7 +180,7 @@ app.post('/login', async (req, res) => {
     }
   }
 })
-
+/* ---------------- logout ----------------- */
 app.delete('/logout', async (req, res) => {
   req.session.destroy(error => {
     if (error) {
@@ -190,6 +194,24 @@ app.delete('/logout', async (req, res) => {
   })
 })
 
+/* ---------------- verify ----------------- */
+app.get('/captcha', function (req, res) {
+  const captcha = svgCaptcha.create({
+    size: 4, // 驗證碼長度
+    ignoreChars: 'o01il', // 忽略字符
+    color: true, // 驗證碼的字符是否有顏色
+    background: '#fff', // 驗證碼圖片背景顏色
+    noise: 2 // 干擾線數量
+    // width: 150, // 圖片寬
+    // height: 50 // 圖片長
+  })
+  req.session.captcha = captcha.text
+  res.type('svg')
+  res.status(200)
+  res.send({ success: true, svg: captcha.data })
+})
+
+/* ---------------- heartbeat ----------------- */
 app.get('/heartbeat', async (req, res) => {
   let islogin = false
   if (req.session.user !== undefined) {
@@ -200,6 +222,7 @@ app.get('/heartbeat', async (req, res) => {
   // res.send(req.session.user !== undefined)
 })
 
+/* ---------------- 新增檔案庫 ----------------- */
 app.post('/file', async (req, res) => {
   // 沒有登入
   if (req.session.user === undefined) {
@@ -207,66 +230,31 @@ app.post('/file', async (req, res) => {
     res.send({ success: false, message: '未登入' })
     return
   }
-  if (!req.headers['content-type'].includes('multipart/form-data')) {
-    res.status(400)
-    res.send({ success: false, message: '格式不符' })
-    return
-  }
-
-  // 有一個上傳進來的檔案，欄位是 image
-  // req，進來的東西
-  // res，要出去的東西
-  // err，檔案上傳的錯誤
-  // upload.single(欄位)(req, res, 上傳完畢的 function)
-  upload.single('image')(req, res, async error => {
-    if (error instanceof multer.MulterError) {
-      // 上傳錯誤
-      let message = ''
-      if (error.code === 'LIMIT_FILE_SIZE') {
-        message = '檔案太大'
-      } else {
-        message = '格式不符'
+  try {
+    const result = await db.files.create(
+      {
+        user: req.session.user,
+        file: []
       }
+    )
+    res.status(200)
+    res.send({ success: true, message: '', result: result._id })
+  } catch (error) {
+    if (error.name === 'ValidationError') {
+      // 資料格式錯誤
+      const key = Object.keys(error.errors)[0]
+      const message = error.errors[key].message
       res.status(400)
       res.send({ success: false, message })
-    } else if (error) {
+    } else {
+      console.log(error)
+      // 伺服器錯誤
       res.status(500)
       res.send({ success: false, message: '伺服器錯誤' })
-    } else {
-      try {
-        let name = ''
-        if (process.env.FTP === 'true') {
-          name = path.basename(req.file.path)
-        } else {
-          name = req.file.filename
-        }
-        const result = await db.files.create(
-          {
-            user: req.session.user,
-            description: req.body.description,
-            name
-          }
-        )
-        res.status(200)
-        res.send({ success: true, message: '', name, _id: result._id })
-      } catch (error) {
-        if (error.name === 'ValidationError') {
-          // 資料格式錯誤
-          const key = Object.keys(error.errors)[0]
-          const message = error.errors[key].message
-          res.status(400)
-          res.send({ success: false, message })
-        } else {
-          console.log(error)
-          // 伺服器錯誤
-          res.status(500)
-          res.send({ success: false, message: '伺服器錯誤' })
-        }
-      }
     }
-  })
+  }
 })
-
+/* ---------------------- 讀取相片 --------------------- */
 app.get('/file/:name', async (req, res) => {
   if (req.session.user === undefined) {
     res.status(401)
@@ -287,7 +275,7 @@ app.get('/file/:name', async (req, res) => {
     res.redirect('http://' + process.env.FTP_HOST + '/' + process.env.FTP_USER + '/' + req.params.name)
   }
 })
-
+/* ---------------------- 查詢 --------------------- */
 app.get('/album/:user', async (req, res) => {
   if (req.session.user === undefined) {
     res.status(401)
@@ -303,93 +291,131 @@ app.get('/album/:user', async (req, res) => {
   try {
     const result = await db.files.find({ user: req.params.user })
     res.status(200)
-    res.send({ success: true, message: '', result })
+    res.send({ success: true, message: '', result: result[0] })
   } catch (error) {
     res.status(500)
     res.send({ success: false, message: '伺服器錯誤' })
   }
 })
-
+/* ---------------------- 修改 --------------------- */
 app.patch('/file/:id', async (req, res) => {
-  if (!req.headers['content-type'].includes('application/json')) {
-    res.status(400)
-    res.send({ success: false, message: '格式不符' })
-    return
-  }
-  // 沒有登入
-  if (!req.session.user) {
-    res.status(401)
-    res.send({ success: false, message: '無權限' })
-    return
-  }
-
-  try {
-    // 檢查相片擁有者是不是本人
-    let result = await db.files.findById(req.params.id)
-    if (result.user !== req.session.user) {
-      res.status(403)
+  if (JSON.stringify(req.body) === '{}') {
+    if (!req.headers['content-type'].includes('multipart/form-data')) {
+      res.status(400)
+      res.send({ success: false, message: '格式不符' })
+      return
+    }
+    upload.single('image')(req, res, async error => {
+      if (error instanceof multer.MulterError) {
+        // 上傳錯誤
+        let message = ''
+        if (error.code === 'LIMIT_FILE_SIZE') {
+          message = '檔案太大'
+        } else {
+          message = '格式不符'
+        }
+        res.status(400)
+        res.send({ success: false, message })
+      } else if (error) {
+        res.status(500)
+        res.send({ success: false, message: '伺服器錯誤' })
+      } else {
+        try {
+          // 檢查相片擁有者是不是本人
+          let result = await db.files.findById(req.params.id)
+          if (result.user !== req.session.user) {
+            res.status(403)
+            res.send({ success: false, message: '無權限' })
+            return
+          }
+          let name = ''
+          if (process.env.FTP === 'true') {
+            name = path.basename(req.file.path)
+          } else {
+            name = req.file.filename
+          }
+          let index = 0
+          for (const i in result.file) {
+            if (result.file[i].name === req.body.filename) {
+              result.file[i].image.push({
+                name: name,
+                description: req.body.description
+              })
+              index = i
+            }
+          }
+          result = await db.files.findByIdAndUpdate(req.params.id, { file: result.file }, { new: true })
+          res.status(200)
+          res.send({ success: true, message: '', result: result.file[index].image.pop() })
+        } catch (error) {
+          if (error.name === 'ValidationError') {
+            // 資料格式錯誤
+            const key = Object.keys(error.errors)[0]
+            const message = error.errors[key].message
+            res.status(400)
+            res.send({ success: false, message })
+          } else {
+            console.log(error)
+            // 伺服器錯誤
+            res.status(500)
+            res.send({ success: false, message: '伺服器錯誤' })
+          }
+        }
+      }
+    })
+  } else {
+    if (!req.headers['content-type'].includes('application/json')) {
+      res.status(400)
+      res.send({ success: false, message: '格式不符' })
+      return
+    }
+    // 沒有登入
+    if (!req.session.user) {
+      res.status(401)
       res.send({ success: false, message: '無權限' })
       return
     }
-    // findByIdAndUpdate 預設回傳的是更新前的資料
-    // 設定 new true 後會變成回傳新的資料
-    result = await db.files.findByIdAndUpdate(req.params.id, req.body, { new: true })
-    res.status(200)
-    res.send({ success: true, message: '', result })
-  } catch (error) {
-    if (error.name === 'CastError') {
-      // ID 格式不是 MongoDB 的格式
-      res.status(400)
-      res.send({ success: false, message: 'ID 格式錯誤' })
-    } else if (error.name === 'ValidationError') {
-      // 資料格式錯誤
-      const key = Object.keys(error.errors)[0]
-      const message = error.errors[key].message
-      res.status(400)
-      res.send({ success: false, message })
-    } else {
-      // 伺服器錯誤
-      res.status(500)
-      res.send({ success: false, message: '伺服器錯誤' })
-    }
-  }
-})
-
-app.delete('/file/:id', async (req, res) => {
-  // 沒有登入
-  if (!req.session.user) {
-    res.status(401)
-    res.send({ success: false, message: '無權限' })
-    return
-  }
-
-  try {
-    // 檢查相片擁有者是不是本人
-    let result = await db.files.findById(req.params.id)
-    if (result.user !== req.session.user) {
-      res.status(403)
-      res.send({ success: false, message: '無權限' })
-      return
-    }
-    // findByIdAndUpdate 預設回傳的是更新前的資料
-    // 設定 new true 後會變成回傳新的資料
-    result = await db.files.findByIdAndDelete(req.params.id)
-    if (result === null) {
-      res.status(404)
-      res.send({ success: true, message: '找不到資料' })
-    } else {
+    try {
+      // 檢查相片擁有者是不是本人
+      let result = await db.files.findById(req.params.id)
+      if (result.user !== req.session.user) {
+        res.status(403)
+        res.send({ success: false, message: '無權限' })
+        return
+      }
+      if (req.body.do === 'addfolder') {
+        result.file.push({
+          name: req.body.filename,
+          image: []
+        })
+      } else if (req.body.do === 'delfolder') {
+        for (const i of req.body.fileindex) {
+          result.file.splice(i, 1)
+        }
+      } else if (req.body.do === 'delimage') {
+        result.file[req.body.fileindex].image.splice(req.body.imageindex, 1)
+      } else {
+        result.file[req.body.fileindex].image[req.body.imageindex].description = req.body.description
+      }
+      result = await db.files.findByIdAndUpdate(req.params.id, { file: result.file }, { new: true })
       res.status(200)
-      res.send({ success: true, message: '', result })
-    }
-  } catch (error) {
-    if (error.name === 'CastError') {
-      // ID 格式不是 MongoDB 的格式
-      res.status(400)
-      res.send({ success: false, message: 'ID 格式錯誤' })
-    } else {
-      // 伺服器錯誤
-      res.status(500)
-      res.send({ success: false, message: '伺服器錯誤' })
+      res.send({ success: true, message: '' })
+    } catch (error) {
+      if (error.name === 'CastError') {
+        // ID 格式不是 MongoDB 的格式
+        res.status(400)
+        res.send({ success: false, message: 'ID 格式錯誤' })
+      } else if (error.name === 'ValidationError') {
+        // 資料格式錯誤
+        const key = Object.keys(error.errors)[0]
+        const message = error.errors[key].message
+        res.status(400)
+        res.send({ success: false, message })
+      } else {
+        // 伺服器錯誤
+        res.status(500)
+        res.send({ success: false, message: '伺服器錯誤' })
+      }
     }
   }
 })

@@ -29,14 +29,17 @@ const fileSchema = new Schema({
     type: String,
     required: [true, '沒有使用者名稱']
   },
-  description: {
-    type: String,
-    maxlength: [200, '說明必須兩百個字以下']
-  },
-  name: {
-    type: String,
-    required: [true, '沒有檔案名稱']
-  }
+  file: [
+    {
+      name: String,
+      image: [
+        {
+          name: String,
+          description: String
+        }
+      ]
+    }
+  ]
 }, {
   versionKey: false
 })
