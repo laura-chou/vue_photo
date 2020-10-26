@@ -41,6 +41,7 @@ app.use(cors({
   },
   credentials: true
 }))
+
 const sess = {
   secret: 'album',
   // 將 session 存入 mongodb
@@ -55,19 +56,13 @@ const sess = {
     // 1000 毫秒 = 一秒鐘
     // 1000 毫秒 * 60 = 一分鐘
     // 1000 毫秒 * 60 * 30 = 三十分鐘
-    maxAge: 1000 * 60 * 30,
-    sameSite: 'strict'
+    maxAge: 1000 * 60 * 30
   },
   // 是否保存未修改的 session
   saveUninitialized: false,
   // 是否每次重設過期時間
   rolling: true,
   resave: false
-}
-
-if (app.get('env') === 'production') {
-  app.set('trust proxy', 1) // trust first proxy
-  sess.cookie.secure = true // serve secure cookies
 }
 
 app.use(session(sess))
