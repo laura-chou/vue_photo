@@ -30,7 +30,7 @@
                   <i class="fa fa-exclamation-circle mr-2"></i><span>{{ warntext }}</span>
                 </div>
                 <div class="text-center">
-                  <base-button type="danger" class="my-4" @click="submit">登入</base-button>
+                  <base-button id="loginbtn" type="danger" class="my-4" @click="submit">登入</base-button>
                 </div>
               </form>
             </template>
@@ -54,6 +54,7 @@ export default {
   methods: {
     submit () {
       const warn = document.getElementsByClassName('wrong')
+      const loginbtn = document.getElementById('loginbtn')
       if (this.account.length < 4 || this.account.length > 20) {
         warn[0].setAttribute('style', 'display: flex')
         this.warntext = '帳號格式不符'
@@ -61,6 +62,7 @@ export default {
         warn[0].setAttribute('style', 'display: flex')
         this.warntext = '密碼格式不符'
       } else {
+        loginbtn.disabled = true
         this.axios.post(process.env.VUE_APP_APIURL + '/login', { account: this.account, password: this.password })
           .then(response => {
             const data = response.data
@@ -79,6 +81,7 @@ export default {
                   this.$router.push('/')
                   this.account = ''
                   this.password = ''
+                  loginbtn.disabled = false
                   warn[0].setAttribute('style', 'display: none')
                 })
               })()
@@ -90,6 +93,8 @@ export default {
                   title: data.message,
                   allowOutsideClick: false,
                   confirmButtonText: '確定'
+                }).then((result) => {
+                  loginbtn.disabled = false
                 })
               })()
             }
@@ -102,6 +107,8 @@ export default {
                 title: error.response.data.message,
                 allowOutsideClick: false,
                 confirmButtonText: '確定'
+              }).then((result) => {
+                loginbtn.disabled = false
               })
             })()
           })

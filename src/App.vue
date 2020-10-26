@@ -13,16 +13,16 @@
       </div>
       <ul class="navbar-nav ml-lg-auto">
         <li class="nav-item" v-if="user.length == 0" >
-            <a class="nav-link nav-link-icon" href="#" @click="page('/login')">登入</a>
+          <a class="nav-link nav-link-icon" href="#" @click="page('/login')">登入</a>
         </li>
         <li class="nav-item" v-else>
-            <a class="nav-link nav-link-icon" href="#" @click="page('/album')">我的相簿</a>
+          <a class="nav-link nav-link-icon" href="#" @click="page('/album')">我的相簿</a>
         </li>
         <li class="nav-item" v-if="user.length == 0" >
-            <a class="nav-link nav-link-icon" href="#" @click="page('/register')">註冊</a>
+          <a class="nav-link nav-link-icon" href="#" @click="page('/register')">註冊</a>
         </li>
         <li class="nav-item" v-else >
-            <a class="nav-link nav-link-icon" href="#" @click="logout">登出</a>
+          <a class="nav-link nav-link-icon" href="#" @click="logout">登出</a>
         </li>
       </ul>
     </base-nav>
@@ -117,7 +117,8 @@ export default {
   name: 'app',
   data () {
     return {
-      hb: ''
+      hb: '',
+      islogout: false
     }
   },
   components: {
@@ -142,48 +143,56 @@ export default {
       }
     },
     logout () {
-      this.axios.delete(process.env.VUE_APP_APIURL + '/logout')
-        .then(response => {
-          const data = response.data
-          if (data.success) {
+      if (!this.islogout) {
+        this.islogout = true
+        this.axios.delete(process.env.VUE_APP_APIURL + '/logout')
+          .then(response => {
+            const data = response.data
+            if (data.success) {
             // 如果回來的資料 success 是 true
-            (async () => {
-              await this.$swal.fire({
-                icon: 'success',
-                title: '登出成功',
-                allowOutsideClick: false,
-                confirmButtonText: '確定'
-              }).then((result) => {
+              (async () => {
+                await this.$swal.fire({
+                  icon: 'success',
+                  title: '登出成功',
+                  allowOutsideClick: false,
+                  confirmButtonText: '確定'
+                }).then((result) => {
                 // 如果現在不是在首頁，跳到登出後的首頁
-                this.$store.commit('logout')
-                if (this.$route.path !== '/') {
-                  this.$router.push('/')
-                }
-              })
-            })()
-          } else {
+                  this.$store.commit('logout')
+                  this.islogout = false
+                  if (this.$route.path !== '/') {
+                    this.$router.push('/')
+                  }
+                })
+              })()
+            } else {
             // 不是就顯示回來的 message
+              (async () => {
+                await this.$swal.fire({
+                  icon: 'error',
+                  title: data.message,
+                  allowOutsideClick: false,
+                  confirmButtonText: '確定'
+                }).then((result) => {
+                  this.islogout = false
+                })
+              })()
+            }
+          })
+          .catch(error => {
+          // 如果回來的狀態不是 200，顯示回來的 message
             (async () => {
               await this.$swal.fire({
                 icon: 'error',
-                title: data.message,
+                title: error.response.data.message,
                 allowOutsideClick: false,
                 confirmButtonText: '確定'
+              }).then((result) => {
+                this.islogout = false
               })
             })()
-          }
-        })
-        .catch(error => {
-          // 如果回來的狀態不是 200，顯示回來的 message
-          (async () => {
-            await this.$swal.fire({
-              icon: 'error',
-              title: error.response.data.message,
-              allowOutsideClick: false,
-              confirmButtonText: '確定'
-            })
-          })()
-        })
+          })
+      }
     },
     heartbeat () {
       this.axios.get(process.env.VUE_APP_APIURL + '/heartbeat')

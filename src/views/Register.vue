@@ -52,7 +52,7 @@
                   <i class="fa fa-exclamation-circle mr-2"></i><span>{{ warntext }}</span>
                 </div>
                 <div class="text-center">
-                    <base-button type="danger" class="my-4" @click="submit">註冊</base-button>
+                    <base-button id="regbtn" type="danger" class="my-4" @click="submit">註冊</base-button>
                 </div>
               </form>
             </template>
@@ -108,6 +108,7 @@ export default {
     },
     submit () {
       const warn = document.getElementsByClassName('wrong')
+      const regbtn = document.getElementById('regbtn')
       if (this.account.length < 4 || this.account.length > 20) {
         warn[0].setAttribute('style', 'display: flex')
         this.warntext = '帳號格式不符'
@@ -121,6 +122,7 @@ export default {
         warn[0].setAttribute('style', 'display: flex')
         this.warntext = '驗證碼必填'
       } else {
+        regbtn.disabled = true
         this.axios.post(process.env.VUE_APP_APIURL + '/users', { account: this.account, password: this.password, verify: this.verify })
           .then(response => {
             const data = response.data
@@ -137,6 +139,7 @@ export default {
                   this.password = ''
                   this.verify = ''
                   warn[0].setAttribute('style', 'display: none')
+                  regbtn.disabled = false
                   this.getverify()
                 })
               })()
@@ -148,6 +151,8 @@ export default {
                   title: data.message,
                   allowOutsideClick: false,
                   confirmButtonText: '確定'
+                }).then((result) => {
+                  regbtn.disabled = false
                 })
               })()
             }
@@ -166,6 +171,7 @@ export default {
                   this.password = ''
                   this.verify = ''
                   warn[0].setAttribute('style', 'display: none')
+                  regbtn.disabled = false
                   this.getverify()
                 }
               })
