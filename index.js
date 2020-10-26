@@ -218,7 +218,6 @@ app.get('/captcha', function (req, res) {
 /* ---------------- heartbeat ----------------- */
 app.get('/heartbeat', async (req, res) => {
   let islogin = false
-  console.log(req.sessionID)
   if (req.session.user !== undefined) {
     islogin = true
   }
