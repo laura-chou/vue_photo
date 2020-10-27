@@ -145,7 +145,7 @@ export default {
     logout () {
       if (!this.islogout) {
         this.islogout = true
-        this.axios.delete(process.env.VUE_APP_APIURL + '/logout')
+        this.axios.delete(process.env.VUE_APP_APIURL + '/logout/' + this.user)
           .then(response => {
             const data = response.data
             if (data.success) {
@@ -195,7 +195,7 @@ export default {
       }
     },
     heartbeat () {
-      this.axios.get(process.env.VUE_APP_APIURL + '/heartbeat')
+      this.axios.get(process.env.VUE_APP_APIURL + '/heartbeat/' + this.user)
         .then(response => {
           const data = response.data
           // 如果是登入中

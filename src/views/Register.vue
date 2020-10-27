@@ -166,14 +166,12 @@ export default {
                 allowOutsideClick: false,
                 confirmButtonText: '確定'
               }).then((result) => {
-                if (error.response.data.message === '驗證碼錯誤') {
-                  this.account = ''
-                  this.password = ''
-                  this.verify = ''
-                  warn[0].setAttribute('style', 'display: none')
-                  regbtn.disabled = false
-                  this.getverify()
-                }
+                this.account = ''
+                this.password = ''
+                this.verify = ''
+                warn[0].setAttribute('style', 'display: none')
+                regbtn.disabled = false
+                this.getverify()
               })
             })()
           })

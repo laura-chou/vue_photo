@@ -177,7 +177,7 @@ export default {
         .then(response => {
           const data = response.data.result
           if (data === undefined) {
-            this.axios.post(process.env.VUE_APP_APIURL + '/file/')
+            this.axios.post(process.env.VUE_APP_APIURL + '/file/' + this.user)
               .then(response => {
                 this.id = response.data.result
               })
