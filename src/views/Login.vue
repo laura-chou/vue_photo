@@ -75,7 +75,7 @@ export default {
                   allowOutsideClick: false,
                   confirmButtonText: '確定'
                 }).then((result) => {
-                // 呼叫 vuex 的登入
+                  // 呼叫 vuex 的登入
                   this.$store.commit('login', this.account)
                   // 跳到登入後的相簿頁
                   this.$router.push('/')

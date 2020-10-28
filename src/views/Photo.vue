@@ -42,10 +42,10 @@
                   <base-button type="success" icon="fa fa-edit" @click="edit(item)"></base-button>
                 </div>
                 <div class="col-6" v-if="item.edit">
-                  <base-button type="success" icon="fa fa-check" @click="update(item, index)"></base-button>
+                  <base-button class="updatebtn" type="success" icon="fa fa-check" @click="update(item, index)"></base-button>
                 </div>
                 <div class="col-6" v-else>
-                  <base-button type="danger" icon="fa fa-trash" @click="del(item, index)"></base-button>
+                  <base-button class="deletebtn" type="danger" icon="fa fa-trash" @click="del(item, index)"></base-button>
                 </div>
               </div>
             </div>
@@ -194,6 +194,9 @@ export default {
                 title: error.response.data.message,
                 allowOutsideClick: false,
                 confirmButtonText: '確定'
+              }).then((result) => {
+                addbtn.disabled = false
+                cancelbtn.disabled = false
               })
             })()
           })
@@ -214,6 +217,7 @@ export default {
     },
     del (item, idx) {
       (async () => {
+        const deletebtn = document.getElementsByClassName('deletebtn')
         await this.$swal.fire({
           icon: 'warning',
           title: '確定要刪除嗎？',
@@ -223,6 +227,9 @@ export default {
           confirmButtonText: '確定'
         }).then((result) => {
           if (result.isConfirmed) {
+            for (const i of deletebtn) {
+              i.disabled = true
+            }
             const send = {
               do: 'delimage',
               fileindex: this.fileinfo.index,
@@ -231,6 +238,9 @@ export default {
             this.axios.patch(process.env.VUE_APP_APIURL + '/file/' + this.id, send)
               .then(response => {
                 this.picture.splice(idx, 1)
+                for (const i of deletebtn) {
+                  i.disabled = false
+                }
               })
               .catch(() => {
                 (async () => {
@@ -239,6 +249,11 @@ export default {
                     title: '發生錯誤',
                     allowOutsideClick: false,
                     confirmButtonText: '確定'
+                  }).then((result) => {
+                    this.picture.splice(idx, 1)
+                    for (const i of deletebtn) {
+                      i.disabled = false
+                    }
                   })
                 })()
               })
@@ -247,6 +262,10 @@ export default {
       })()
     },
     update (item, idx) {
+      const updatebtn = document.getElementsByClassName('updatebtn')
+      for (const i of updatebtn) {
+        i.disabled = true
+      }
       const send = {
         do: 'editimage',
         fileindex: this.fileinfo.index,
@@ -255,6 +274,9 @@ export default {
       }
       this.axios.patch(process.env.VUE_APP_APIURL + '/file/' + this.id, send)
         .then(response => {
+          for (const i of updatebtn) {
+            i.disabled = false
+          }
           item.edit = false
           item.title = item.model
         })
@@ -265,6 +287,10 @@ export default {
               title: '發生錯誤',
               allowOutsideClick: false,
               confirmButtonText: '確定'
+            }).then((result) => {
+              for (const i of updatebtn) {
+                i.disabled = false
+              }
             })
           })()
         })
