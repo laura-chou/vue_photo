@@ -56,6 +56,8 @@ const sess = {
     // 1000 毫秒 = 一秒鐘
     // 1000 毫秒 * 60 = 一分鐘
     // 1000 毫秒 * 60 * 30 = 三十分鐘
+    sameSite: 'none',
+    secure: true,
     maxAge: 1000 * 60 * 30
   },
   // 是否保存未修改的 session
@@ -64,7 +66,7 @@ const sess = {
   rolling: true,
   resave: false
 }
-
+app.set('trust proxy', 1)
 app.use(session(sess))
 
 let storage
@@ -163,6 +165,7 @@ app.post('/login', async (req, res) => {
     )
     if (result.length > 0) {
       req.session.user = result[0].account
+      console.log(req.sessionID)
       res.status(200)
       res.send({ success: true, message: '' })
     } else {
@@ -217,6 +220,7 @@ app.get('/captcha', function (req, res) {
 /* ---------------- heartbeat ----------------- */
 app.get('/heartbeat', async (req, res) => {
   let islogin = false
+  console.log(req.sessionID)
   if (req.session.user !== undefined) {
     islogin = true
   }
