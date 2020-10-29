@@ -18,7 +18,6 @@ dotenv.config()
 const MongoStore = connectMongo(session)
 
 const app = express()
-
 app.use(bodyParser.json())
 app.use(cors({
   origin (origin, callback) {
@@ -133,6 +132,12 @@ app.post('/users', async (req, res) => {
       account: req.body.account,
       password: md5(req.body.password)
     })
+    await db.files.create(
+      {
+        user: req.body.account,
+        file: []
+      }
+    )
     res.status(200)
     res.send({ success: true, message: '' })
   } catch (error) {
@@ -227,38 +232,6 @@ app.get('/heartbeat', async (req, res) => {
   // res.send(req.session.user !== undefined)
 })
 
-/* ---------------- 新增檔案庫 ----------------- */
-app.post('/file', async (req, res) => {
-  // 沒有登入
-  if (req.session.user === undefined) {
-    res.status(401)
-    res.send({ success: false, message: '未登入' })
-    return
-  }
-  try {
-    const result = await db.files.create(
-      {
-        user: req.session.user,
-        file: []
-      }
-    )
-    res.status(200)
-    res.send({ success: true, message: '', result: result._id })
-  } catch (error) {
-    if (error.name === 'ValidationError') {
-      // 資料格式錯誤
-      const key = Object.keys(error.errors)[0]
-      const message = error.errors[key].message
-      res.status(400)
-      res.send({ success: false, message })
-    } else {
-      console.log(error)
-      // 伺服器錯誤
-      res.status(500)
-      res.send({ success: false, message: '伺服器錯誤' })
-    }
-  }
-})
 /* ---------------------- 讀取相片 --------------------- */
 app.get('/file/:name', async (req, res) => {
   if (req.session.user === undefined) {
