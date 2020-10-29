@@ -186,22 +186,15 @@ export default {
       this.axios.get(process.env.VUE_APP_APIURL + '/album/' + this.user)
         .then(response => {
           const data = response.data.result
-          if (data === undefined) {
-            this.axios.post(process.env.VUE_APP_APIURL + '/file')
-              .then(response => {
-                this.id = response.data.result
-              })
-          } else {
-            this.id = data._id
-            for (let i = 0; i < data.file.length; i++) {
-              let hasimg = false
-              if (data.file[i].image.length > 0) {
-                hasimg = true
-              }
-              this.checks.push({ checked: false, fileName: data.file[i].name, image: hasimg })
+          this.id = data._id
+          for (let i = 0; i < data.file.length; i++) {
+            let hasimg = false
+            if (data.file[i].image.length > 0) {
+              hasimg = true
             }
-            this.$store.commit('folder', this.checks)
+            this.checks.push({ checked: false, fileName: data.file[i].name, image: hasimg })
           }
+          this.$store.commit('folder', this.checks)
         })
         .catch(() => {
           (async () => {
