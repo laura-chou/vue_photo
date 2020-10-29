@@ -66,17 +66,6 @@
   - `image` 相片庫
     - `name` 相片名稱
     - `description` 相片說明
-### 新增檔案庫 (使用者第一次登入時)
-- 請求方式為 **POST**
-- 路徑為 `/file`
-- 回傳相應狀態碼、是否成功、失敗訊息及 ID，資料格式為 JSON
-  ```js
-  {
-    "success": true,
-    "message": "",
-    "result": "id"
-  }
-  ```
 ### 查詢
 - 請求方式為 **GET**
 - 路徑為 `/album`，以 user account 判斷要查詢的項目
